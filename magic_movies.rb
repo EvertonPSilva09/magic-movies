@@ -117,3 +117,69 @@ delete '/movies/:id' do
   end
 end
 
+get '/cart/list' do
+  cart_items = cart.items
+
+  if cart_items.empty?
+    return { message: 'Cart is empty' }.to_json
+  else
+    cart_movies = cart_items.map do |movie|
+      { id: movie.id, title: movie.title, synopsis: movie.synopsis }
+    end
+
+    return cart_movies.to_json
+  end
+end
+
+post '/cart/add' do
+  body = get_body(request)
+  movie_id = body['movie_id']
+
+  movie = Movie.find_by(id: movie_id)
+
+  if movie
+    cart.add_movie(movie)
+    return { message: 'Movie added to cart' }.to_json
+  else
+    status 404
+    return { error: 'Movie not found' }.to_json
+  end
+end
+
+delete '/cart/remove' do
+  body = get_body(request)
+  movie_id = body['movie_id']
+
+  movie = Movie.find_by(id: movie_id)
+
+  if movie
+    cart.remove_movie(movie)
+    return { message: 'Movie removed from cart' }.to_json
+  else
+    status 404
+    return { error: 'Movie not found' }.to_json
+  end
+end
+
+delete '/cart/clear' do
+  cart.clear
+  return { message: 'Cart cleared' }.to_json
+end
+
+post '/cart/save' do
+  body = get_body(request)
+  user_id = body['user_id']
+  cart_items = cart.items
+
+  if cart_items.empty?
+    return { error: 'Cart is empty' }.to_json
+  end
+
+  cart_items.each do |movie|
+    MovieReservation.create(user_id: user_id, movie_id: movie.id, return_date: Date.today + 7)
+  end
+
+  cart.clear
+
+  return { message: "Film reserved successfully, it will be available until the date #{Date.today + 7})" }.to_json
+end
