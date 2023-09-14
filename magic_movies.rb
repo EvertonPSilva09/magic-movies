@@ -183,3 +183,21 @@ post '/cart/save' do
 
   return { message: "Film reserved successfully, it will be available until the date #{Date.today + 7})" }.to_json
 end
+get '/movie_reservations' do
+  movie_reservations = MovieReservation.all
+
+  if movie_reservations.empty?
+    return { message: 'No reservations found' }.to_json
+  else
+
+    reservation_info = movie_reservations.map do |reservation|
+      {
+        user_id: reservation.user_id,
+        movie_id: reservation.movie_id,
+        return_date: reservation.return_date
+      }
+    end
+
+    return reservation_info.to_json
+  end
+end
